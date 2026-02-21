@@ -39,40 +39,6 @@ export function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Background texture */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-[0.02]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Header */}
-      <header className="relative z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold text-foreground">
-              The Breakdown
-            </Link>
-            <nav className="hidden md:flex space-x-8">
-              {categories.map((category) => (
-                <Link
-                  key={category}
-                  to={`/?category=${category}`}
-                  className={`px-3 py-2 text-sm font-medium transition-colors hover:text-accent ${
-                    selectedCategory === category
-                      ? 'text-accent bg-accent/10'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {category}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       {loading ? (
         <div className="flex items-center justify-center min-h-[50vh]">
