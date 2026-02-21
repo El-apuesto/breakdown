@@ -8,7 +8,7 @@ const categories = ['All', 'World', 'National', 'Entertainment', 'Sports', 'Life
 export function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category') || 'All';
 
   useEffect(() => {
@@ -123,7 +123,7 @@ export function Home() {
 
             {/* Article Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {articles.slice(1).map((article, index) => (
+              {articles.slice(1).map((article) => (
                 <Link
                   key={article.id}
                   to={`/article/${article.id}`}
