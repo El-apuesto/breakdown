@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { fetchArticles, type Article } from '../lib/supabase';
 import { Calendar, ArrowRight, Clock } from 'lucide-react';
@@ -10,7 +10,6 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedCategory = searchParams.get('category') || 'All';
-  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadArticles();
@@ -26,22 +25,17 @@ export function Home() {
     setLoading(false);
   }
 
-  // Parallax effect for hero
-  useEffect(() => {
-    const handleScroll = () => {
-      if (heroRef.current) {
-        const scrolled = window.scrollY;
-        const rate = scrolled * 0.3;
-        heroRef.current.style.transform = `translateY(${rate}px)`;
-      }
-    };
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // const topStory = articles[0];
-  // const otherStories = articles.slice(1);
+  const getExcerpt = (body: string, maxLength: number = 150) => {
+    return body.length > maxLength ? body.substring(0, maxLength) + '...' : body;
+  };
 
   return (
     <div className="min-h-screen">
@@ -53,149 +47,140 @@ export function Home() {
         }}
       />
 
-      <div className="relative pt-48 md:pt-56 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => {
-                  if (category === 'All') {
-                    setSearchParams({});
-                  } else {
-                    setSearchParams({ category });
-                  }
-                }}
-                className={`px-4 py-2 text-xs tracking-[0.15em] uppercase transition-all duration-200 border ${
-                  selectedCategory === category
-                    ? 'border-accent text-accent bg-accent/5'
-                    : 'border-border text-muted-foreground hover:border-accent/50 hover:text-foreground'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+      {/* Header */}
+      <header className="relative z-50 bg-background/80 backdrop-blur-md border-b border-border/50">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="text-2xl font-bold text-foreground">
+              The Breakdown
+            </Link>
+            <nav className="hidden md:flex space-x-8">
+              {categories.map((category) => (
+                <Link
+                  key={category}
+                  to={`/?category=${category}`}
+                  className={`px-3 py-2 text-sm font-medium transition-colors hover:text-accent ${
+                    selectedCategory === category
+                      ? 'text-accent bg-accent/10'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {category}
+                </Link>
+              ))}
+            </nav>
           </div>
+        </div>
+      </header>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-24">
-              <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : articles.length === 0 ? (
-            <div className="text-center py-24">
-              <p className="text-muted-foreground text-lg">No articles found.</p>
-            </div>
-          ) : (
-            <>
-              {/* Top Story Hero */}
-              <div className="relative mb-16 overflow-hidden">
-                <div className="relative">
-                  <div className="grid md:grid-cols-2 gap-8 items-center">
-                    {/* Placeholder Image */}
-                    <div className="relative aspect-[16/10] overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent z-10" />
-                      <div className="w-full h-full bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center">
-                        <span className="text-6xl font-serif text-accent/30">TB</span>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="space-y-6">
-                      <div className="flex items-center gap-4">
-                        <span className="px-3 py-1 text-xs tracking-[0.15em] uppercase bg-accent text-background font-medium">
-                          BREAKING
-                        </span>
-                        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="w-3 h-3" />
-                          {new Date().toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold leading-tight group-hover:text-accent transition-colors duration-300">
-                        Local News Satire Platform Successfully Deployed
-                      </h2>
-
-                      <p className="text-muted-foreground leading-relaxed">
-                        The Breakdown is now running with a sleek black background. Article generation is working with deepseek cloud AI model. Database setup pending.
-                      </p>
-
-                      <span className="inline-flex items-center gap-2 text-sm text-accent group-hover:gap-3 transition-all duration-300">
-                        View Status
-                        <ArrowRight className="w-4 h-4" />
-                      </span>
-                    </div>
+      {/* Hero Section */}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
+        </div>
+      ) : articles.length > 0 ? (
+        <section className="relative py-20">
+          <div className="container mx-auto px-4">
+            {/* Top Story */}
+            <div className="mb-16">
+              <Link
+                to={`/article/${articles[0].id}`}
+                className="block group"
+              >
+                <div className="relative overflow-hidden rounded-lg bg-card/50 border border-border/50">
+                  <div className="aspect-w-16 aspect-h-9">
+                    <img
+                      src={articles[0].image_url || '/placeholder.jpg'}
+                      alt={articles[0].headline}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
                   </div>
-
-                  {/* Decorative line */}
-                  <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                </div>
-              </div>
-
-              {/* Article Grid */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {[1, 2, 3, 4, 5, 6].map((index) => (
-                  <div key={index} className="h-full bg-card/30 border border-border/50 p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 hover:-translate-y-1">
-                    {/* Category & Date */}
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="p-8">
+                    <div className="flex items-center gap-2 mb-4">
                       <span className="px-2 py-1 text-[10px] tracking-[0.15em] uppercase border border-accent/30 text-accent">
-                        {['World', 'National', 'Sports', 'Entertainment', 'Lifestyle', 'Opinion'][index - 1]}
+                        {articles[0].category}
                       </span>
                       <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Clock className="w-3 h-3" />
-                        {new Date().toLocaleDateString()}
+                        {formatDate(articles[0].created_at)}
+                      </span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-serif font-bold leading-tight mb-4 group-hover:text-accent transition-colors duration-300">
+                      {articles[0].headline}
+                    </h1>
+                    <p className="text-lg text-muted-foreground leading-relaxed mb-6">
+                      {getExcerpt(articles[0].body, 200)}
+                    </p>
+                    <div className="flex items-center gap-2 text-accent group-hover:gap-3 transition-all duration-300">
+                      Read Full Story
+                      <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            {/* Article Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {articles.slice(1).map((article, index) => (
+                <Link
+                  key={article.id}
+                  to={`/article/${article.id}`}
+                  className="group block h-full"
+                >
+                  <article className="h-full bg-card/30 border border-border/50 p-6 transition-all duration-300 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 hover:-translate-y-1">
+                    {/* Category & Date */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="px-2 py-1 text-[10px] tracking-[0.15em] uppercase border border-accent/30 text-accent">
+                        {article.category}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <Clock className="w-3 h-3" />
+                        {formatDate(article.created_at)}
                       </span>
                     </div>
 
                     {/* Headline */}
-                    <h3 className="text-xl font-serif font-semibold mb-3 leading-snug hover:text-accent transition-colors duration-300">
-                      Sample Satirical Article {index}: Local News Takes Unexpected Turn
+                    <h3 className="text-xl font-serif font-semibold mb-3 leading-snug group-hover:text-accent transition-colors duration-300 line-clamp-3">
+                      {article.headline}
                     </h3>
 
                     {/* Excerpt */}
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      In a shocking development that surprised absolutely no one, local officials announced something completely predictable today...
+                    <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                      {getExcerpt(article.body, 120)}
                     </p>
 
                     {/* Read more */}
                     <div className="mt-4 pt-4 border-t border-border/50">
-                      <span className="text-xs text-accent flex items-center gap-1 hover:gap-2 transition-all duration-300">
+                      <span className="text-xs text-accent flex items-center gap-1 group-hover:gap-2 transition-all duration-300">
                         Read More
                         <ArrowRight className="w-3 h-3" />
                       </span>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-            </span>
+                  </article>
+                </Link>
+              ))}
+            </div>
           </div>
-
-          {/* Headline */}
-          <h3 className="text-xl font-serif font-semibold mb-3 leading-snug group-hover:text-accent transition-colors duration-300 line-clamp-3">
-            {article.headline}
-          </h3>
-
-          {/* Excerpt */}
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
-            {getExcerpt(article.body, 120)}
-          </p>
-
-          {/* Read more */}
-          <div className="mt-4 pt-4 border-t border-border/50">
-            <span className="text-xs text-accent flex items-center gap-1 group-hover:gap-2 transition-all duration-300">
-              Read More
-              <ArrowRight className="w-3 h-3" />
-            </span>
+        </section>
+      ) : (
+        <section className="py-20">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-2xl font-serif mb-8">No articles found</h2>
+            <p className="text-muted-foreground mb-8">
+              Check back later for fresh satire content.
+            </p>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors"
+            >
+              <Calendar className="w-4 h-4" />
+              Browse All Categories
+            </Link>
           </div>
-        </article>
-      </Link>
+        </section>
+      )}
     </div>
   );
 }
