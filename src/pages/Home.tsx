@@ -3,8 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { fetchArticles, type Article } from '../lib/supabase';
 import { Calendar, ArrowRight, Clock } from 'lucide-react';
 
-const categories = ['All', 'World', 'National', 'Entertainment', 'Sports', 'Lifestyle', 'Opinion'];
-
 export function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
